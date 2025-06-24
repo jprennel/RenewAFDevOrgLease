@@ -7,7 +7,7 @@ run-name: ${{ github.actor }} triggered dev org renewal build
 # - Weekly schedule: Every Monday at 8:30 PM UTC
 # - Manual dispatch: Can be triggered manually from GitHub Actions UI
 on:
-  schedule:P
+  schedule:
     - cron: '30 20 * * MON'  # Weekly renewal on Mondays
   workflow_dispatch:  # Allow manual triggering
 
