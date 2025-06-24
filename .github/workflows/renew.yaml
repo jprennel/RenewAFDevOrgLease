@@ -1,29 +1,48 @@
+# GitHub Actions workflow to automatically renew Agentforce development org leases
+# This prevents dev orgs from expiring by performing regular "heartbeat" operations
 name: Renew Agentforce Dev Org Lease
 run-name: ${{ github.actor }} triggered dev org renewal build
-#on: [push]
+
+# Triggers:
+# - Weekly schedule: Every Monday at 8:30 PM UTC
+# - Manual dispatch: Can be triggered manually from GitHub Actions UI
 on:
   schedule:
-    - cron:  '30 20 * * MON'
-  workflow_dispatch:
+    - cron: '30 20 * * MON'  # Weekly renewal on Mondays
+  workflow_dispatch:  # Allow manual triggering
+
 jobs:
   dev-org-renew:
     runs-on: ubuntu-latest
-    environment: AFDevOrgRenew
+    environment: AFDevOrgRenew  # Uses GitHub environment for secret management
     steps:
+      # Check out repository code
       - uses: actions/checkout@v4
-        with: 
+        with:
           ref: main
+
+      # Set up Node.js environment for Salesforce CLI
       - uses: actions/setup-node@v3
         with:
           node-version: '20'
+
+      # Install Salesforce CLI globally
       - name: 'Install CLI'
         run: npm install @salesforce/cli --location=global
+
+      # Verify CLI installation
       - run: sf --version
+
+      # Authenticate to the Agentforce org using stored SFDX URL
+      # The AGENTFORCE_DEV_ORG_URL secret contains the authentication URL
       - name: 'Authenticate to Agentforce org'
         run: |
-            echo ${{ secrets.AGENTFORCE_DEV_ORG_URL }} > ./AGENTFORCE_DEV_ORG_URL.txt
-            ls -al ./AGENTFORCE_DEV_ORG_URL.txt
-            sf org login sfdx-url -f ./AGENTFORCE_DEV_ORG_URL.txt -a AFDevOrgRenew -d
+          echo ${{ secrets.AGENTFORCE_DEV_ORG_URL }} > ./AGENTFORCE_DEV_ORG_URL.txt
+          ls -al ./AGENTFORCE_DEV_ORG_URL.txt
+          sf org login sfdx-url -f ./AGENTFORCE_DEV_ORG_URL.txt -a AFDevOrgRenew -d
+
+      # Perform a simple query to "exercise" the org and keep it active
+      # This serves as the renewal mechanism - showing the org is in use
       - name: 'Query data'
         run: |
-            sf data query --query "select name from organization" -o AFDevOrgRenew
+          sf data query --query "select name from organization" -o AFDevOrgRenew
