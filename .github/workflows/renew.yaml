@@ -7,7 +7,7 @@ run-name: ${{ github.actor }} triggered dev org renewal build
 # - Weekly schedule: Every Monday at 8:30 PM UTC
 # - Manual dispatch: Can be triggered manually from GitHub Actions UI
 on:
-  schedule:
+  schedule:P
     - cron: '30 20 * * MON'  # Weekly renewal on Mondays
   workflow_dispatch:  # Allow manual triggering
 
@@ -27,22 +27,35 @@ jobs:
           node-version: '20'
 
       # Install Salesforce CLI globally
-      - name: 'Install CLI'
-        run: npm install @salesforce/cli --location=global
+      - name: '📦 Install CLI'
+        run: |
+          echo "🚀 Starting Salesforce CLI installation..."
+          npm install @salesforce/cli --location=global
+          echo "✅ Salesforce CLI installed successfully!"
 
       # Verify CLI installation
-      - run: sf --version
+      - name: '🔍 Verify CLI installation'
+        run: |
+          echo "🔍 Checking CLI version..."
+          sf --version
+          echo "✅ CLI verification complete!"
 
       # Authenticate to the Agentforce org using stored SFDX URL
       # The AGENTFORCE_DEV_ORG_URL secret contains the authentication URL
-      - name: 'Authenticate to Agentforce org'
+      - name: '🔐 Authenticate to Agentforce org'
         run: |
+          echo "🔐 Starting authentication to Agentforce org..."
           echo ${{ secrets.AGENTFORCE_DEV_ORG_URL }} > ./AGENTFORCE_DEV_ORG_URL.txt
           ls -al ./AGENTFORCE_DEV_ORG_URL.txt
+          echo "🌐 Logging in to Salesforce org..."
           sf org login sfdx-url -f ./AGENTFORCE_DEV_ORG_URL.txt -a AFDevOrgRenew -d
+          echo "✅ Authentication successful!"
 
       # Perform a simple query to "exercise" the org and keep it active
       # This serves as the renewal mechanism - showing the org is in use
-      - name: 'Query data'
+      - name: '🔄 Query data (renewal heartbeat)'
         run: |
+          echo "🔄 Performing renewal query to keep org active..."
           sf data query --query "select name from organization" -o AFDevOrgRenew
+          echo "✅ Renewal query completed successfully!"
+          echo "🎉 Agentforce dev org renewal process complete!"
